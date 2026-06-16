@@ -1,0 +1,1587 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>XUJIE AI-HTML PPT编辑器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* === INK PRESS Design System === */
+  :root {
+    --bg: #0C0C0C;
+    --bg-2: #141414;
+    --bg-3: #1C1C1C;
+    --surface: #111111;
+    --plate: #F2EBDD;
+    --plate-ink: #F8F4EA;
+    --ink: #0A0A0A;
+    --paper: #EDE8DC;
+    --paper-2: #D6CFBF;
+    --line: #2A2820;
+    --line-light: #353228;
+    --mute: #7A7468;
+    --accent: #E84C1C;
+    --accent-glow: rgba(232,76,28,.22);
+    --blue: #2A50FF;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+    --serif: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+    --sans: 'Noto Serif SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --topbar: 60px;
+    --r-sm: 3px;
+    --r-md: 6px;
+    --r-lg: 10px;
+    --r-pill: 999px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; -webkit-font-smoothing: antialiased; }
+  body {
+    font: 13px/1.6 var(--sans);
+    color: var(--paper);
+    background-color: var(--bg);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(242,235,221,.025) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(242,235,221,.025) 60px);
+    overflow: hidden;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  header {
+    min-height: var(--topbar);
+    display: flex; align-items: center; justify-content: space-between; gap: 18px;
+    padding: 10px 20px 10px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    position: relative;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent) 0%, transparent 40%);
+    opacity: .4;
+  }
+  }
+  .actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; min-width: 0; }
+  button {
+    appearance: none;
+    min-height: 30px;
+    border: 1px solid var(--line-light);
+    background: var(--bg-2);
+    color: var(--paper);
+    padding: 5px 12px;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: .06em;
+    white-space: nowrap;
+    transition: border-color .12s, background .12s, color .12s, box-shadow .12s;
+    position: relative;
+  }
+  button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    background: var(--accent-glow);
+    transition: opacity .12s;
+  }
+  button:hover {
+    border-color: var(--accent);
+    color: var(--paper);
+    background: var(--bg-3);
+    box-shadow: 0 0 0 1px var(--accent-glow), inset 0 0 12px var(--accent-glow);
+  }
+  button:hover::before { opacity: 1; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary {
+    background: var(--accent);
+    color: var(--plate);
+    border-color: var(--accent);
+    box-shadow: 0 0 18px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  button.primary:hover { background: #F05A2C; border-color: #F05A2C; color: var(--plate); box-shadow: 0 0 28px var(--accent-glow); }
+  button:disabled { opacity: .35; cursor: not-allowed; }
+  button:disabled:hover { border-color: var(--line-light); background: var(--bg-2); transform: none; box-shadow: none; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
+    padding: 10px 18px; border-radius: var(--r-pill);
+    border: 1px solid var(--line);
+    background: rgba(20,20,20,.94);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 18px 46px rgba(0,0,0,.38);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+    z-index: 100;
+  }
+  .toast { border-color: var(--line-light); }
+  .toast.err { background: var(--accent); color: var(--plate); border-color: var(--accent); }
+  .file-modal[hidden] { display: none; }
+  .file-modal {
+    position: fixed; inset: 0; z-index: 80;
+    display: grid; place-items: center;
+    padding: 24px;
+  }
+  .file-modal__scrim {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 50% 34%, var(--accent-glow), transparent 30%),
+      rgba(12,12,12,.74);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .file-modal__panel {
+    position: relative; width: min(520px, calc(100vw - 32px)); max-height: min(680px, calc(100vh - 48px));
+    display: flex; flex-direction: column; overflow: hidden;
+    border: 1px solid var(--line-light);
+    border-radius: var(--r-md);
+    background: var(--bg-2);
+    box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(242,235,221,.04) inset;
+    transform: translateY(8px) scale(.98);
+    opacity: 0;
+    animation: modalIn .18s ease forwards;
+  }
+  @keyframes modalIn {
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .file-modal__head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    padding: 20px 20px 14px;
+  }
+  .file-modal__eyebrow {
+    margin: 0 0 4px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  }
+  .file-modal__title {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 20px; line-height: 1.2; font-weight: 700;
+  }
+  .file-modal__sub {
+    margin: 6px 0 0;
+    color: var(--mute); font-size: 13px; line-height: 1.45;
+  }
+  .icon-btn {
+    width: 30px; height: 30px; min-height: 30px; padding: 0; border-radius: var(--r-sm);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex: 0 0 auto;
+    font-size: 16px;
+  }
+  .file-list {
+    overflow: auto;
+    padding: 8px 14px 16px;
+  }
+  .file-option {
+    width: 100%;
+    display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: center; gap: 12px;
+    margin: 4px 0; padding: 12px;
+    border-radius: var(--r-sm);
+    text-align: left;
+    background: transparent;
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: var(--sans);
+    border: 1px solid transparent;
+    transition: border-color .12s, background .12s;
+  }
+  .file-option:hover, .file-option:focus-visible {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    outline: none;
+  }
+  .file-icon {
+    width: 36px; height: 36px; border-radius: var(--r-sm);
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--paper);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-weight: 400; font-size: 13px; letter-spacing: .02em;
+  }
+  .file-text {
+    min-width: 0;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .file-name {
+    display: block;
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--paper);
+    font-weight: 700; font-size: 14px;
+  }
+  .file-meta { color: var(--mute); font-size: 12px; }
+  .file-pick { color: var(--accent); font-family: var(--mono); font-size: 11px; letter-spacing: .08em; }
+  .file-modal__foot {
+    display: flex; justify-content: flex-end;
+    padding: 12px 20px 18px;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .btn-like {
+    display: inline-flex; align-items: center;
+    border: 1px solid var(--line-light); background: var(--bg-2);
+    color: var(--paper); padding: 7px 12px; border-radius: var(--r-sm); cursor: pointer;
+    font-size: 12px; font-weight: 400; transition: all .12s;
+    user-select: none;
+  }
+  .btn-like:hover { border-color: var(--accent); }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: var(--r-sm);
+    border: 1px solid var(--line-light);
+    background: var(--bg-2);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 400;
+    max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .status-pill::before { content: '›'; color: var(--accent); font-size: 12px; line-height: 1; }
+
+  main { flex: 1; display: flex; min-height: 0; }
+
+  .pane-code {
+    position: fixed; z-index: 70;
+    top: var(--topbar); left: 0; bottom: 0;
+    width: min(520px, calc(100vw - 28px)); min-width: 0;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--line);
+    background: var(--bg-2);
+    box-shadow: 24px 0 70px rgba(0,0,0,.45);
+    transform: translateX(-102%);
+    transition: transform .22s ease;
+  }
+  .pane-code.open { transform: translateX(0); }
+  .source-scrim[hidden] { display: none; }
+  .source-scrim {
+    position: fixed; z-index: 65;
+    top: var(--topbar); left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,10,.42);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  }
+
+  .code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .code-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .code-title strong { font-size: 13px; color: var(--paper); font-weight: 700; letter-spacing: .04em; }
+  .code-title strong::before { content: '›'; color: var(--accent); margin-right: 7px; font-size: 14px; }
+  .code-title span { font-family: var(--mono); font-size: 11px; color: var(--mute); letter-spacing: .06em; }
+  .toggle {
+    width: 28px; height: 28px; min-height: 28px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--r-sm); padding: 0; font-size: 14px;
+  }
+  .code-body { flex: 1; display: flex; min-height: 0; }
+  textarea {
+    flex: 1; resize: none; border: 0; outline: 0;
+    padding: 16px 20px;
+    font: 13px/1.6 var(--mono);
+    background: #0C0C0C; color: var(--paper);
+    tab-size: 2;
+    caret-color: var(--accent);
+  }
+  textarea::placeholder { color: color-mix(in srgb, var(--mute), transparent 20%); }
+
+  .pane-preview { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .preview-head {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 44px;
+    padding: 8px 18px; border-bottom: 1px solid var(--line);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    background: var(--bg);
+  }
+  .preview-head > span:first-child::before { content: '›'; color: var(--accent); margin-right: 8px; font-size: 13px; }
+  .hint { font-family: var(--sans); font-size: 12px; color: var(--mute); text-transform: none; letter-spacing: 0; }
+  .preview-frame-wrap {
+    flex: 1; min-height: 0;
+    padding: 12px;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(242,235,221,.04) 24px),
+      repeating-linear-gradient(90deg, transparent, transparent 23px, rgba(242,235,221,.04) 24px),
+      var(--bg);
+  }
+  iframe {
+    width: 100%; height: 100%; border: 1px solid var(--line-light); background: var(--plate);
+    border-radius: var(--r-md);
+    display: block;
+    box-shadow: 0 16px 48px rgba(0,0,0,.4);
+  }
+  @media (max-width: 860px) {
+    :root { --topbar: 174px; }
+    header { align-items: flex-start; flex-direction: column; }
+    .actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+    .actions button { min-height: 32px; padding-inline: 12px; }
+    .preview-head { align-items: flex-start; flex-direction: column; gap: 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--paper);letter-spacing:.06em;">HTML编辑器</span>
+    <div class="actions">
+      <button id="undoBtn" title="撤销 (Ctrl+Z)">撤销</button>
+      <button id="redoBtn" title="重做 (Ctrl+Shift+Z)">重做</button>
+      <button id="openFileBtn" title="直接打开一个 HTML 文件">打开文件</button>
+      <button id="openFolderBtn" title="请打开包含 HTML 所在的文件夹">打开文件夹</button>
+      <span id="folderStatus" class="status-pill" hidden></span>
+      <button id="sourceBtn" title="高级：查看或手动修改 HTML 源码">源码</button>
+      <button id="loadDemo">载入示例</button>
+      <button id="overwriteBtn" disabled title="先「打开文件夹」">覆盖原文件</button>
+      <button id="exportBtn" class="primary">导出新文件</button>
+    </div>
+  </header>
+  <div class="toast" id="toast"></div>
+  <div class="file-modal" id="filePickerModal" hidden role="dialog" aria-modal="true" aria-labelledby="filePickerTitle">
+    <div class="file-modal__scrim" data-file-picker-cancel></div>
+    <section class="file-modal__panel">
+      <div class="file-modal__head">
+        <div>
+          <p class="file-modal__eyebrow">Open folder</p>
+          <h2 class="file-modal__title" id="filePickerTitle">选择要编辑的 HTML</h2>
+          <p class="file-modal__sub" id="filePickerSub">这个文件夹里有多个 HTML 文件。</p>
+        </div>
+        <button class="icon-btn" type="button" id="filePickerClose" title="关闭">×</button>
+      </div>
+      <div class="file-list" id="filePickerList"></div>
+      <div class="file-modal__foot">
+        <button type="button" id="filePickerCancel">取消</button>
+      </div>
+    </section>
+  </div>
+  <div class="source-scrim" id="sourceScrim" hidden></div>
+  <main>
+    <section class="pane-code" id="paneCode">
+      <div class="code-head">
+        <span class="code-title">
+          <strong>高级源码</strong>
+          <span>用于查看、粘贴或手动修复 HTML</span>
+        </span>
+        <button class="toggle" id="toggleCode" title="关闭源码">×</button>
+      </div>
+      <div class="code-body">
+        <textarea id="srcInput" spellcheck="false" placeholder="高级功能：在这里查看、粘贴或手动修复 HTML 源码。"></textarea>
+      </div>
+    </section>
+    <section class="pane-preview">
+      <div class="preview-head">
+        <span>预览与编辑</span>
+        <span class="hint">点击文字可直接编辑 · 点击图片/视频可替换</span>
+      </div>
+      <div class="preview-frame-wrap">
+        <iframe id="preview" sandbox="allow-same-origin allow-scripts allow-popups"></iframe>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const srcInput = document.getElementById('srcInput');
+  const preview  = document.getElementById('preview');
+  const exportBtn = document.getElementById('exportBtn');
+  const toggleCode = document.getElementById('toggleCode');
+  const paneCode = document.getElementById('paneCode');
+  const sourceBtn = document.getElementById('sourceBtn');
+  const sourceScrim = document.getElementById('sourceScrim');
+  const loadDemo = document.getElementById('loadDemo');
+  const openFolderBtn = document.getElementById('openFolderBtn');
+  const folderStatus = document.getElementById('folderStatus');
+  const overwriteBtn = document.getElementById('overwriteBtn');
+  const toastEl = document.getElementById('toast');
+  const filePickerModal = document.getElementById('filePickerModal');
+  const filePickerList = document.getElementById('filePickerList');
+  const filePickerSub = document.getElementById('filePickerSub');
+  const filePickerClose = document.getElementById('filePickerClose');
+  const filePickerCancel = document.getElementById('filePickerCancel');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const openFileBtn = document.getElementById('openFileBtn');
+
+  const SUPPORTS_FSA = typeof window.showDirectoryPicker === 'function';
+
+  // Folder mode state
+  let dirHandle = null;        // root project folder
+  let assetsDirHandle = null;  // <root>/assets/
+  let htmlHandle = null;       // the .html file we are editing
+  let htmlName = null;
+  const blobURLs = [];         // for cleanup
+
+  function showToast(msg, isErr) {
+    toastEl.textContent = msg;
+    toastEl.classList.toggle('err', !!isErr);
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  function updateOverwriteUI() {
+    if (!htmlHandle) {
+      overwriteBtn.disabled = true;
+      overwriteBtn.title = '先打开包含 HTML 所在的文件夹';
+    } else {
+      overwriteBtn.disabled = false;
+      overwriteBtn.title = '原地覆盖 ' + htmlName;
+    }
+    if (dirHandle && htmlName) {
+      folderStatus.textContent = (dirHandle.name || '') + ' / ' + htmlName;
+      folderStatus.hidden = false;
+    } else {
+      folderStatus.hidden = true;
+    }
+  }
+
+  if (!SUPPORTS_FSA) {
+    openFolderBtn.disabled = true;
+    openFolderBtn.title = '当前浏览器不支持文件系统访问，请使用电脑端 Chrome / Edge / Arc';
+    openFileBtn.disabled = true;
+    openFileBtn.title = '当前浏览器不支持文件系统访问，请使用电脑端 Chrome / Edge / Arc';
+  }
+
+  function chooseHTMLFile(htmls, folderName) {
+    return new Promise(resolve => {
+      filePickerList.innerHTML = '';
+      filePickerSub.textContent = (folderName || '当前文件夹') + ' 里有 ' + htmls.length + ' 个 HTML 文件。';
+      let settled = false;
+
+      const cleanup = value => {
+        if (settled) return;
+        settled = true;
+        filePickerModal.hidden = true;
+        document.removeEventListener('keydown', onKeydown);
+        filePickerClose.removeEventListener('click', onCancel);
+        filePickerCancel.removeEventListener('click', onCancel);
+        filePickerModal.querySelector('[data-file-picker-cancel]').removeEventListener('click', onCancel);
+        resolve(value);
+      };
+      const onCancel = () => cleanup(null);
+      const onKeydown = e => {
+        if (e.key === 'Escape') cleanup(null);
+      };
+
+      htmls.forEach((item, index) => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'file-option';
+        option.innerHTML =
+          '<span class="file-icon">HTML</span>' +
+          '<span class="file-text"><span class="file-name"></span><span class="file-meta">网页文件 · #' + (index + 1) + '</span></span>' +
+          '<span class="file-pick">打开</span>';
+        option.querySelector('.file-name').textContent = item.name;
+        option.addEventListener('click', () => cleanup(item));
+        filePickerList.appendChild(option);
+      });
+
+      filePickerClose.addEventListener('click', onCancel);
+      filePickerCancel.addEventListener('click', onCancel);
+      filePickerModal.querySelector('[data-file-picker-cancel]').addEventListener('click', onCancel);
+      document.addEventListener('keydown', onKeydown);
+      filePickerModal.hidden = false;
+      requestAnimationFrame(() => {
+        const first = filePickerList.querySelector('.file-option');
+        if (first) first.focus();
+      });
+    });
+  }
+
+  // ---- Asset I/O ----
+  function freeBlobURLs() { while (blobURLs.length) URL.revokeObjectURL(blobURLs.pop()); }
+
+  async function ensureAssetsDir() {
+    if (assetsDirHandle) return assetsDirHandle;
+    assetsDirHandle = await dirHandle.getDirectoryHandle('assets', { create: true });
+    return assetsDirHandle;
+  }
+
+  // Choose a non-conflicting filename inside assets/ — keeps the original name when possible
+  async function uniqueAssetName(suggested) {
+    await ensureAssetsDir();
+    const dot = suggested.lastIndexOf('.');
+    const base = dot > 0 ? suggested.slice(0, dot) : suggested;
+    const ext = dot > 0 ? suggested.slice(dot) : '';
+    let name = suggested, i = 1;
+    while (true) {
+      try { await assetsDirHandle.getFileHandle(name); }
+      catch { return name; } // not found → free
+      name = base + '-' + (i++) + ext;
+    }
+  }
+
+  function sanitizeAssetName(raw, fallbackBase) {
+    const fallback = fallbackBase || 'media';
+    const original = String(raw || '').trim();
+    const dot = original.lastIndexOf('.');
+    const hiddenExtOnly = dot === 0 && original.indexOf('.', 1) === -1 && original.length > 1;
+    const hasExt = (dot > 0 || hiddenExtOnly) && dot < original.length - 1;
+    const rawBase = hasExt ? original.slice(0, dot) : original;
+    const rawExt = hasExt ? original.slice(dot) : '';
+    const base = rawBase
+      .replace(/[^\p{L}\p{N}._-]+/gu, '-')
+      .replace(/^[.-]+|[.-]+$/g, '') || fallback;
+    const ext = rawExt.replace(/[^A-Za-z0-9.]+/g, '').replace(/^\.+/, '.');
+    return base + ext;
+  }
+
+  // Called from the iframe runtime when the user inserts media.
+  // Returns { relPath, blobURL } when folder is open, or null to signal base64 fallback.
+  window.__editorWriteAsset = async function(file, kind) {
+    if (!dirHandle || !SUPPORTS_FSA) return null;
+    try {
+      const safe = sanitizeAssetName(file.name, kind === 'video' ? 'video' : 'image');
+      const finalName = await uniqueAssetName(safe);
+      const fh = await assetsDirHandle.getFileHandle(finalName, { create: true });
+      const w = await fh.createWritable();
+      await w.write(file); await w.close();
+      const blobURL = URL.createObjectURL(file);
+      blobURLs.push(blobURL);
+      return { relPath: 'assets/' + finalName, blobURL };
+    } catch (e) {
+      console.error('writeAsset failed', e);
+      showToast('媒体写入失败：' + e.message, true);
+      return null;
+    }
+  };
+
+  // After iframe renders, swap relative `assets/...` srcs with object URLs so they display.
+  // Covers <img>, <video src>, and <video><source src>. Original path is stamped onto
+  // data-src-original so export restores it.
+  window.__editorBindAssets = async function(idoc) {
+    if (!assetsDirHandle) return;
+    const nodes = idoc.querySelectorAll('img, video, source');
+    for (const node of nodes) {
+      const orig = node.getAttribute('src') || '';
+      if (!orig.startsWith('assets/')) continue;
+      const name = orig.slice('assets/'.length);
+      if (name.includes('/')) continue; // one level deep only
+      try {
+        const fh = await assetsDirHandle.getFileHandle(name);
+        const file = await fh.getFile();
+        const url = URL.createObjectURL(file);
+        blobURLs.push(url);
+        node.dataset.srcOriginal = orig;
+        node.src = url;
+        // <source> change requires <video> to reload
+        if (node.tagName === 'SOURCE' && node.parentElement && node.parentElement.tagName === 'VIDEO') {
+          try { node.parentElement.load(); } catch {}
+        }
+      } catch { /* missing on disk; leave as-is */ }
+    }
+  };
+
+  // Bridge: iframe runtime calls this for error toasts (e.g., video without folder open)
+  window.__editorToast = function(msg, isErr) { showToast(msg, isErr); };
+
+  // ---- Open folder ----
+  async function openFolder() {
+    if (!SUPPORTS_FSA) return;
+    try {
+      const dh = await window.showDirectoryPicker({ mode: 'readwrite' });
+      // ensure readwrite
+      let perm = await dh.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') perm = await dh.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') { showToast('未授予读写权限', true); return; }
+
+      // Find .html files at the top level
+      const htmls = [];
+      for await (const [name, handle] of dh.entries()) {
+        if (handle.kind === 'file' && /\.html?$/i.test(name)) htmls.push({ name, handle });
+      }
+      htmls.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' }));
+      if (!htmls.length) { showToast('文件夹里没有 .html 文件', true); return; }
+
+      let chosen = htmls[0];
+      if (htmls.length > 1) {
+        chosen = await chooseHTMLFile(htmls, dh.name);
+        if (!chosen) return;
+      }
+
+      // commit state
+      freeBlobURLs();
+      dirHandle = dh;
+      htmlHandle = chosen.handle;
+      htmlName = chosen.name;
+      assetsDirHandle = null;
+      try { assetsDirHandle = await dh.getDirectoryHandle('assets'); } catch { /* may not exist yet */ }
+
+      const file = await htmlHandle.getFile();
+      const text = await file.text();
+      srcInput.value = text;
+      renderPreview(text);
+      updateOverwriteUI();
+      showToast('已打开 ' + (dh.name || '') + ' / ' + htmlName);
+    } catch (e) {
+      if (e.name !== 'AbortError') { console.error(e); showToast('打开失败：' + e.message, true); }
+    }
+  }
+  openFolderBtn.addEventListener('click', openFolder);
+
+  // ---- Open single file ----
+  async function openFile() {
+    if (!SUPPORTS_FSA) return;
+    try {
+      const [fh] = await window.showOpenFilePicker({ types: [{ description: 'HTML 文件', accept: { 'text/html': ['.html', '.htm'] } }] });
+      freeBlobURLs();
+      dirHandle = null;
+      assetsDirHandle = null;
+      htmlHandle = fh;
+      htmlName = fh.name;
+      const text = await fh.getFile().text();
+      srcInput.value = text;
+      renderPreview(text);
+      updateOverwriteUI();
+      setSourceOpen(false);
+      showToast('已打开 ' + htmlName);
+    } catch (e) {
+      if (e.name !== 'AbortError') { console.error(e); showToast('打开失败：' + e.message, true); }
+    }
+  }
+  openFileBtn.addEventListener('click', openFile);
+
+  const EDITABLE_TAGS = new Set(['P','SPAN','H1','H2','H3','H4','H5','H6','LI','A','BUTTON','LABEL','TD','TH','BLOCKQUOTE','FIGCAPTION','STRONG','EM','SMALL','DT','DD','SUMMARY','CAPTION','DIV']);
+
+  const INJECTED_STYLE = `
+    [data-editable="true"] { outline: 1px dashed transparent; transition: outline-color .12s, box-shadow .12s; cursor: text; }
+    [data-editable="true"]:hover { outline-color: rgba(232,76,28,.65); }
+    [data-editable="true"]:focus { outline: 2px solid #E84C1C; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(232,76,28,.12); }
+    [data-media-editable="true"] { cursor: pointer; transition: filter .12s, outline-color .12s; outline: 2px solid transparent; }
+    [data-media-editable="true"]:hover { filter: brightness(.92); outline-color: rgba(232,76,28,.65); }
+    [data-media-selected="true"] { outline: 2px solid #E84C1C !important; box-shadow: 0 0 0 4px rgba(232,76,28,.14); }
+    [data-media-placeholder="true"] {
+      position: relative; cursor: pointer;
+      min-height: 80px; min-width: 80px;
+      outline: 2px dashed rgba(232,76,28,.5);
+      outline-offset: -2px;
+      background-color: rgba(12,12,12,.74);
+      transition: background-color .12s, outline-color .12s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    [data-media-placeholder="true"]:hover {
+      background-color: rgba(232,76,28,.12);
+      outline-color: #E84C1C;
+    }
+    [data-media-placeholder="true"]::after {
+      content: '＋  插入图片';
+      pointer-events: none;
+      font: 400 11px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      letter-spacing: .08em;
+      color: #E84C1C;
+      padding: 6px 12px; border-radius: 3px;
+      background: #EDE8DC;
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+    }
+    [data-media-placeholder="true"][data-media-kind="video"]::after { content: '＋  插入视频'; }
+    [data-media-placeholder="true"] > *:not(source):not(track) { opacity: .35; pointer-events: none; }
+    #__editor_toolbar__ {
+      position: absolute; z-index: 2147483647;
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 3px; border-radius: 4px;
+      border: 1px solid #2A2820;
+      background: rgba(14,14,14,.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 28px rgba(0,0,0,.4), 0 0 0 1px rgba(237,232,220,.04) inset;
+      font: 400 12px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; color: #EDE8DC;
+      opacity: 0; transform: translateY(4px); pointer-events: none;
+      transition: opacity .12s, transform .12s;
+      user-select: none;
+    }
+    #__editor_toolbar__.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #__editor_toolbar__ button {
+      appearance: none; border: 0; background: transparent; color: #EDE8DC;
+      min-width: 28px; height: 26px; padding: 0 9px; border-radius: 3px;
+      font: inherit; font-weight: 400; cursor: pointer;
+      transition: background .1s, color .1s;
+    }
+    #__editor_toolbar__ button:hover { background: #E84C1C; color: #F2EBDD; }
+    #__editor_toolbar__ button:active { background: #F05A2C; }
+    #__editor_toolbar__ .sep { width: 1px; height: 16px; background: #2A2820; margin: 0 2px; }
+    #__editor_toolbar__ .label { padding: 0 7px; color: #E84C1C; font: 400 11px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
+    #__editor_toolbar__ .scale {
+      appearance: none; border: 0; outline: 0;
+      width: 60px; height: 22px; padding: 0 8px; border-radius: 3px;
+      background: #1C1C1C; color: #EDE8DC;
+      font: inherit; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 400;
+      text-align: center; user-select: text;
+      transition: background .1s, box-shadow .1s;
+    }
+    #__editor_toolbar__ .scale:hover { background: #1C1C1C; }
+    #__editor_toolbar__ .scale:focus {
+      background: #1C1C1C;
+      box-shadow: 0 0 0 2px rgba(232,76,28,.32);
+    }
+    #__editor_toolbar__ .color-pick {
+      appearance: none; border: 0; outline: 0;
+      width: 22px; height: 22px; padding: 0; border-radius: 3px;
+      background: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #__editor_toolbar__ .color-pick::-webkit-color-swatch-wrapper { padding: 0; border-radius: 3px; }
+    #__editor_toolbar__ .color-pick::-webkit-color-swatch {
+      border: 1px solid #2A2820; border-radius: 3px;
+      width: 18px; height: 18px;
+    }
+    #__editor_toolbar__ .color-pick::-moz-color-swatch {
+      border: 1px solid #2A2820; border-radius: 3px;
+      width: 18px; height: 18px;
+    }
+    #__editor_toolbar__ .color-text {
+      appearance: none; border: 0; outline: 0;
+      width: 62px; height: 22px; padding: 0 6px; border-radius: 3px;
+      background: #1C1C1C; color: #EDE8DC;
+      font: inherit; font-size: 11px; font-variant-numeric: hex;
+      text-align: center; user-select: text;
+      text-transform: uppercase;
+      transition: box-shadow .1s;
+    }
+    #__editor_toolbar__ .color-text:focus {
+      box-shadow: 0 0 0 2px rgba(232,76,28,.32);
+    }
+  `;
+
+  // Inject editing behavior into the iframe document
+  const RUNTIME_SCRIPT = `
+    (function(){
+      const EDITABLE_TAGS = ${JSON.stringify([...EDITABLE_TAGS])};
+      const set = new Set(EDITABLE_TAGS);
+      const FS_MIN = 8, FS_MAX = 240;
+      const IMG_MIN = 24, IMG_MAX = 4000;
+      const STEP = 1.1; // 10% per click
+
+      function hasOnlyTextOrInline(el){
+        for (const n of el.childNodes){
+          if (n.nodeType === 3 && n.nodeValue.trim()) return true;
+        }
+        return false;
+      }
+      const IMG_PLACEHOLDER_SELECTOR = '[data-img-slot],[data-placeholder],.img-slot,.image-slot,.img-placeholder,.placeholder-img';
+      const VIDEO_PLACEHOLDER_SELECTOR = '[data-video-slot],.video-slot,.video-placeholder,.placeholder-video';
+      const IMG_CLASS_RE = /\\b(img-slot|image-slot|img-placeholder|placeholder-img)\\b/g;
+      const VIDEO_CLASS_RE = /\\b(video-slot|video-placeholder|placeholder-video)\\b/g;
+      function isEmptyImg(img){
+        const s = (img.getAttribute('src') || '').trim();
+        if (!s) return true;
+        if (/^(about:blank|#|data:,)$/i.test(s)) return true;
+        if (/placeholder/i.test(s)) return true;
+        return img.complete && img.naturalWidth === 0;
+      }
+      function isEmptyVideo(v){
+        const s = (v.getAttribute('src') || '').trim();
+        if (s && !/placeholder/i.test(s)) return false;
+        for (const src of v.querySelectorAll('source')) {
+          const ss = (src.getAttribute('src') || '').trim();
+          if (ss && !/placeholder/i.test(ss)) return false;
+        }
+        return true;
+      }
+      function markContainerPlaceholder(el, kind){
+        if (el.tagName === 'IMG' || el.tagName === 'VIDEO') return;
+        if (el.hasAttribute('data-media-placeholder')) return;
+        el.setAttribute('data-media-placeholder','true');
+        el.setAttribute('data-media-kind', kind);
+        el.addEventListener('click', onContainerPlaceholderClick);
+      }
+      function setupAsMedia(el){
+        el.setAttribute('data-media-editable','true');
+        el.setAttribute('data-media-kind', el.tagName === 'VIDEO' ? 'video' : 'image');
+        el.addEventListener('click', onMediaClick);
+      }
+      function makeEditable(root){
+        root.querySelectorAll('*').forEach(el => {
+          if (set.has(el.tagName) && hasOnlyTextOrInline(el)) {
+            el.setAttribute('contenteditable','true');
+            el.setAttribute('data-editable','true');
+          }
+        });
+        // Explicit placeholder containers (div/section/etc.)
+        root.querySelectorAll(IMG_PLACEHOLDER_SELECTOR).forEach(el => markContainerPlaceholder(el, 'image'));
+        root.querySelectorAll(VIDEO_PLACEHOLDER_SELECTOR).forEach(el => markContainerPlaceholder(el, 'video'));
+        // <img>: filled → editable; empty → element-level placeholder
+        root.querySelectorAll('img').forEach(img => {
+          if (isEmptyImg(img)) {
+            markElementPlaceholder(img, 'image');
+            img.addEventListener('error', () => markElementPlaceholder(img, 'image'));
+          } else setupAsMedia(img);
+        });
+        // <video>: same pattern
+        root.querySelectorAll('video').forEach(v => {
+          if (isEmptyVideo(v)) markElementPlaceholder(v, 'video');
+          else setupAsMedia(v);
+        });
+      }
+      function markElementPlaceholder(el, kind){
+        el.setAttribute('data-media-placeholder','true');
+        el.setAttribute('data-media-kind', kind);
+        el.style.minWidth = el.style.minWidth || '120px';
+        el.style.minHeight = el.style.minHeight || '80px';
+        el.addEventListener('click', onElementPlaceholderClick);
+      }
+      function onElementPlaceholderClick(e){
+        e.preventDefault(); e.stopPropagation();
+        const el = e.currentTarget;
+        const kind = el.getAttribute('data-media-kind') || (el.tagName === 'VIDEO' ? 'video' : 'image');
+        pickFile(kind, file => {
+          applyMediaFile(file, kind, (src, relPath) => {
+            if (el.tagName === 'VIDEO') {
+              el.querySelectorAll('source').forEach(n => n.remove());
+              if (!el.hasAttribute('controls')) el.setAttribute('controls','');
+            }
+            el.src = src;
+            if (relPath) el.dataset.srcOriginal = relPath; else delete el.dataset.srcOriginal;
+            el.removeAttribute('data-media-placeholder');
+            el.style.minWidth = ''; el.style.minHeight = '';
+            setupAsMedia(el);
+          });
+        });
+      }
+      function pickFile(kind, cb){
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = kind === 'video' ? 'video/*' : 'image/*';
+        input.addEventListener('change', () => {
+          const f = input.files && input.files[0]; if (f) cb(f);
+        });
+        input.click();
+      }
+      // Write file to <root>/assets/ via the parent's FSA handle.
+      // Images fall back to base64 if no folder is open. Videos refuse base64 (too large).
+      async function applyMediaFile(file, kind, applyFn){
+        let res = null;
+        try { res = await window.parent.__editorWriteAsset(file, kind); } catch(e){ console.error(e); }
+        if (res) {
+          applyFn(res.blobURL, res.relPath);
+        } else if (kind === 'video') {
+          try { window.parent.__editorToast('视频必须先「打开文件夹」（不支持 base64 嵌入）', true); } catch {}
+        } else {
+          const r = new FileReader();
+          r.onload = () => applyFn(r.result, null);
+          r.readAsDataURL(file);
+        }
+      }
+      function onContainerPlaceholderClick(e){
+        e.preventDefault(); e.stopPropagation();
+        const el = e.currentTarget;
+        const kind = el.getAttribute('data-media-kind') || 'image';
+        pickFile(kind, file => {
+          applyMediaFile(file, kind, (src, relPath) => {
+            const tag = kind === 'video' ? 'video' : 'img';
+            const m = document.createElement(tag);
+            m.src = src;
+            if (relPath) m.dataset.srcOriginal = relPath;
+            if (kind === 'video') { m.controls = true; m.muted = true; m.playsInline = true; }
+            const classRe = kind === 'video' ? VIDEO_CLASS_RE : IMG_CLASS_RE;
+            if (el.className) m.className = el.className.replace(classRe,'').trim();
+            if (el.id) m.id = el.id;
+            const inline = el.getAttribute('style');
+            if (inline) m.setAttribute('style', inline);
+            const cs = window.getComputedStyle(el);
+            if (!m.style.width && cs.width !== 'auto') m.style.width = cs.width;
+            if (!m.style.height && cs.height !== 'auto' && el.style.aspectRatio === '' && !inline?.includes('aspect-ratio')) m.style.height = cs.height;
+            m.style.objectFit = kind === 'video' ? 'contain' : (m.style.objectFit || 'cover');
+            setupAsMedia(m);
+            el.replaceWith(m);
+          });
+        });
+      }
+
+      // ---- Floating toolbar ----
+      const toolbar = document.createElement('div');
+      toolbar.id = '__editor_toolbar__';
+      document.body.appendChild(toolbar);
+      let activeTarget = null;
+
+      function btn(label, title, onClick){
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = label; b.title = title;
+        b.addEventListener('mousedown', e => e.preventDefault()); // keep focus
+        b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); onClick(); });
+        return b;
+      }
+      function sep(){ const s = document.createElement('span'); s.className = 'sep'; return s; }
+      function label(t){ const s = document.createElement('span'); s.className = 'label'; s.textContent = t; return s; }
+      function formatScale(n){
+        if (!Number.isFinite(n) || n <= 0) n = 1;
+        return n.toFixed(2).replace(/\\.00$/, '') + '×';
+      }
+      function parseScaleInput(raw){
+        let text = String(raw || '').trim();
+        if (!text) return null;
+        text = text.replace(/，/g, '.').replace(/×/g, 'x').toLowerCase();
+        let scale;
+        if (text.endsWith('%')) {
+          scale = parseFloat(text.slice(0, -1)) / 100;
+        } else {
+          scale = parseFloat(text.replace(/x$/, ''));
+        }
+        return Number.isFinite(scale) && scale > 0 ? scale : null;
+      }
+      function scaleInput(target, value, applyValue, readValue){
+        const input = document.createElement('input');
+        input.className = 'scale';
+        input.type = 'text';
+        input.inputMode = 'decimal';
+        input.dataset.resetBase = 'true';
+        input.value = formatScale(value);
+        input.title = '输入倍数，例如 1.25、1.25× 或 125%';
+        let skipBlurCommit = false;
+        const revert = () => { input.value = formatScale(readValue()); };
+        const commit = () => {
+          const parsed = parseScaleInput(input.value);
+          if (parsed == null) {
+            revert();
+            return;
+          }
+          const applied = applyValue(parsed);
+          input.value = formatScale(applied);
+          activeTarget = target;
+          positionToolbar(target);
+        };
+        input.addEventListener('mousedown', e => e.stopPropagation());
+        input.addEventListener('click', e => e.stopPropagation());
+        input.addEventListener('focus', () => {
+          activeTarget = target;
+          input.select();
+        });
+        input.addEventListener('keydown', e => {
+          e.stopPropagation();
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+            input.select();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            skipBlurCommit = true;
+            revert();
+            input.blur();
+          }
+        });
+        input.addEventListener('blur', () => {
+          if (skipBlurCommit) {
+            skipBlurCommit = false;
+            return;
+          }
+          commit();
+        });
+        return input;
+      }
+      function updateScaleBadge(value){
+        const s = toolbar.querySelector('.scale');
+        if (s) s.value = formatScale(value);
+      }
+      function ensureFontBase(el){
+        let base = parseFloat(el.dataset.editorBaseFontSize);
+        if (!Number.isFinite(base) || base <= 0) {
+          base = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+          el.dataset.editorBaseFontSize = base.toFixed(4);
+        }
+        return base;
+      }
+      function getFontScale(el){
+        const base = ensureFontBase(el);
+        const cur = parseFloat(window.getComputedStyle(el).fontSize) || base;
+        return cur / base;
+      }
+      function currentMediaWidth(el){
+        return el.getBoundingClientRect().width || el.naturalWidth || el.videoWidth || 200;
+      }
+      function ensureMediaBase(el){
+        let base = parseFloat(el.dataset.editorBaseMediaWidth);
+        if (!Number.isFinite(base) || base <= 0) {
+          base = currentMediaWidth(el);
+          el.dataset.editorBaseMediaWidth = base.toFixed(4);
+        }
+        return base;
+      }
+      function getMediaScale(el){
+        const base = ensureMediaBase(el);
+        return currentMediaWidth(el) / base;
+      }
+      function mediaKind(el){
+        return el.getAttribute('data-media-kind') || (el.tagName === 'VIDEO' ? 'video' : 'image');
+      }
+      function applyMediaScaleStyles(el, width){
+        el.style.width = width.toFixed(1) + 'px';
+        el.style.height = 'auto';
+        el.style.maxWidth = 'none';
+        if (mediaKind(el) === 'video') el.style.objectFit = 'contain';
+        else el.style.objectFit = el.style.objectFit || '';
+      }
+
+      function positionToolbar(target){
+        const r = target.getBoundingClientRect();
+        const sx = window.scrollX, sy = window.scrollY;
+        toolbar.style.visibility = 'hidden';
+        toolbar.classList.add('show');
+        const tw = toolbar.offsetWidth, th = toolbar.offsetHeight;
+        let top = r.top + sy - th - 10;
+        if (top < sy + 4) top = r.bottom + sy + 8; // flip below if no room above
+        let left = r.left + sx + (r.width - tw) / 2;
+        left = Math.max(sx + 6, Math.min(left, sx + document.documentElement.clientWidth - tw - 6));
+        toolbar.style.top = top + 'px';
+        toolbar.style.left = left + 'px';
+        toolbar.style.visibility = '';
+      }
+
+      function showTextToolbar(el){
+        activeTarget = el;
+        toolbar.innerHTML = '';
+        ensureFontBase(el);
+        toolbar.appendChild(label('字号'));
+        toolbar.appendChild(scaleInput(el, getFontScale(el), value => setFontScale(el, value), () => getFontScale(el)));
+        toolbar.appendChild(btn('A−', '缩小字号 (10%)', () => scaleFont(el, 1/STEP)));
+        toolbar.appendChild(btn('A＋', '放大字号 (10%)', () => scaleFont(el, STEP)));
+        toolbar.appendChild(sep());
+        toolbar.appendChild(label('颜色'));
+        const baseColor = getFontColor(el);
+        const colorWrap = document.createElement('div');
+        colorWrap.style.cssText = 'display:flex;align-items:center;gap:4px;';
+        const colorSwatch = document.createElement('input');
+        colorSwatch.type = 'color';
+        colorSwatch.className = 'color-pick';
+        colorSwatch.value = baseColor;
+        colorSwatch.title = '选择颜色';
+        colorSwatch.addEventListener('input', e => { setFontColor(el, e.target.value); colorText.value = e.target.value; colorSwatch.value = e.target.value; });
+        colorSwatch.addEventListener('mousedown', e => e.stopPropagation());
+        colorSwatch.addEventListener('click', e => e.stopPropagation());
+        const colorText = document.createElement('input');
+        colorText.type = 'text';
+        colorText.className = 'color-text';
+        colorText.value = baseColor;
+        colorText.title = '输入 hex 颜色，如 #E84C1C';
+        colorText.addEventListener('mousedown', e => e.stopPropagation());
+        colorText.addEventListener('click', e => e.stopPropagation());
+        colorText.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const v = colorText.value.trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(v) || /^#[0-9a-fA-F]{3}$/.test(v)) { setFontColor(el, v); colorSwatch.value = v; }
+            colorText.blur();
+          } else if (e.key === 'Escape') {
+            colorText.value = getFontColor(el);
+          }
+        });
+        colorText.addEventListener('blur', () => {
+          const v = colorText.value.trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(v) || /^#[0-9a-fA-F]{3}$/.test(v)) { setFontColor(el, v); colorSwatch.value = v; }
+          else colorText.value = getFontColor(el);
+        });
+        colorWrap.appendChild(colorSwatch);
+        colorWrap.appendChild(colorText);
+        toolbar.appendChild(colorWrap);
+        toolbar.appendChild(sep());
+        toolbar.appendChild(btn('×', '关闭', hideToolbar));
+        positionToolbar(el);
+        observeTarget(el);
+      }function showMediaToolbar(el){
+        activeTarget = el;
+        const kind = mediaKind(el);
+        const isVideo = kind === 'video';
+        toolbar.innerHTML = '';
+        ensureMediaBase(el);
+        toolbar.appendChild(label(isVideo ? '视频' : '图片'));
+        toolbar.appendChild(scaleInput(el, getMediaScale(el), value => setMediaScale(el, value), () => getMediaScale(el)));
+        toolbar.appendChild(btn('−', '缩小 (10%)', () => scaleMedia(el, 1/STEP)));
+        toolbar.appendChild(btn('＋', '放大 (10%)', () => scaleMedia(el, STEP)));
+        toolbar.appendChild(sep());
+        toolbar.appendChild(btn('替换', isVideo ? '替换视频' : '替换图片', () => replaceMedia(el)));
+        toolbar.appendChild(btn('×', '取消选中', () => { el.removeAttribute('data-media-selected'); hideToolbar(); }));
+        positionToolbar(el);
+        observeTarget(el);
+      }
+      function hideToolbar(){
+        toolbar.classList.remove('show');
+        if (activeTarget && activeTarget.getAttribute && activeTarget.getAttribute('data-media-editable')) activeTarget.removeAttribute('data-media-selected');
+        activeTarget = null;
+      }
+
+      function scaleFont(el, factor){
+        const base = ensureFontBase(el);
+        const cur = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+        const next = Math.max(FS_MIN, Math.min(FS_MAX, cur * factor));
+        el.style.fontSize = next.toFixed(2) + 'px';
+        updateScaleBadge(next / base);
+        positionToolbar(el);
+      }
+      function setFontScale(el, scale){
+        const base = ensureFontBase(el);
+        const next = Math.max(FS_MIN, Math.min(FS_MAX, base * scale));
+        el.style.fontSize = next.toFixed(2) + 'px';
+        updateScaleBadge(next / base);
+        return next / base;
+      }
+      function getFontColor(el){
+        const c = el.style.color;
+        if (c && /^#[0-9a-fA-F]{3,6}$/.test(c)) return c;
+        const computed = window.getComputedStyle(el).color;
+        const m = computed.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        if (m) {
+          const r = parseInt(m[1]).toString(16).padStart(2,'0');
+          const g = parseInt(m[2]).toString(16).padStart(2,'0');
+          const b = parseInt(m[3]).toString(16).padStart(2,'0');
+          return '#' + r + g + b;
+        }
+        return '#EDE8DC';
+      }
+      function setFontColor(el, hex){
+        el.style.color = hex;
+        positionToolbar(el);
+      }
+      function scaleMedia(el, factor){
+        const base = ensureMediaBase(el);
+        const curW = el.getBoundingClientRect().width || el.naturalWidth || el.videoWidth || 200;
+        const next = Math.max(IMG_MIN, Math.min(IMG_MAX, curW * factor));
+        applyMediaScaleStyles(el, next);
+        updateScaleBadge(next / base);
+        requestAnimationFrame(() => positionToolbar(el));
+      }
+      function setMediaScale(el, scale){
+        const base = ensureMediaBase(el);
+        const next = Math.max(IMG_MIN, Math.min(IMG_MAX, base * scale));
+        applyMediaScaleStyles(el, next);
+        updateScaleBadge(next / base);
+        requestAnimationFrame(() => positionToolbar(el));
+        return next / base;
+      }
+      function resetMediaBase(el){
+        delete el.dataset.editorBaseMediaWidth;
+      }
+      function replaceMedia(el){
+        const kind = mediaKind(el);
+        pickFile(kind, file => {
+          applyMediaFile(file, kind, (src, relPath) => {
+            if (el.tagName === 'VIDEO') el.querySelectorAll('source').forEach(n => n.remove());
+            el.src = src;
+            if (relPath) el.dataset.srcOriginal = relPath;
+            else delete el.dataset.srcOriginal;
+            resetMediaBase(el); // reset scale base so new media starts fresh
+            requestAnimationFrame(() => positionToolbar(el));
+          });
+        });
+      }
+
+      function onMediaClick(e){
+        e.preventDefault(); e.stopPropagation();
+        const el = e.currentTarget;
+        document.querySelectorAll('[data-media-selected]').forEach(n => n.removeAttribute('data-media-selected'));
+        el.setAttribute('data-media-selected', 'true');
+        showMediaToolbar(el);
+      }
+      // text focus → show toolbar
+      document.addEventListener('focusin', e => {
+        const el = e.target;
+        if (el && el.getAttribute && el.getAttribute('data-editable') === 'true') showTextToolbar(el);
+      });
+      // hide on outside click / blur to nothing
+      document.addEventListener('mousedown', e => {
+        if (toolbar.contains(e.target)) return;
+        const t = e.target;
+        const isEditable = t.closest && t.closest('[data-editable="true"]');
+        const isMedia = t.closest && t.closest('[data-media-editable="true"]');
+        if (!isEditable && !isMedia) hideToolbar();
+      }, true);
+      // reposition on scroll/resize
+      window.addEventListener('scroll', () => { if (activeTarget) positionToolbar(activeTarget); }, true);
+      window.addEventListener('resize', () => { if (activeTarget) positionToolbar(activeTarget); });
+
+      // MutationObserver: reposition when activeTarget or its ancestors change size
+      const mo = new MutationObserver(() => { if (activeTarget) positionToolbar(activeTarget); });
+      function observeTarget(el) {
+        mo.disconnect();
+        if (!el) return;
+        for (let node = el; node && node !== document.body; node = node.parentElement) {
+          mo.observe(node, { attributes: true, attributeFilter: ['style', 'class'] });
+          mo.observe(node.parentElement || document.body, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+      }
+
+      // Notify parent of repositioning need via postMessage
+      function notifyReposition() {
+        if (!activeTarget) return;
+        try {
+          window.parent.postMessage({
+            type: '__editor_reposition',
+            id: activeTarget.id || '',
+            class: activeTarget.className || '',
+            rect: activeTarget.getBoundingClientRect(),
+          }, '*');
+        } catch(e) {}
+      }
+
+      window.addEventListener('resize', () => { if (activeTarget) { positionToolbar(activeTarget); notifyReposition(); } }, true);
+
+      // prevent link navigation while editing
+      document.addEventListener('click', e => {
+        const a = e.target.closest && e.target.closest('a');
+        if (a) e.preventDefault();
+      }, true);
+
+      makeEditable(document.body);
+
+      // Listen for reposition signal from parent
+      window.addEventListener('message', e => {
+        if (e.data?.type === '__editor_reposition' && activeTarget) {
+          positionToolbar(activeTarget);
+        }
+      });
+    })();
+  `;
+
+  function renderPreview(html){
+    const doc = preview.contentDocument;
+    if (!doc) return;
+    // Build a full document. If the user pasted a fragment, wrap it.
+    const isFull = /<html[\\s>]/i.test(html);
+    const finalHTML = isFull ? html : `<!doctype html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`;
+    doc.open(); doc.write(finalHTML); doc.close();
+
+    // After write, inject style + runtime once DOM is ready
+    const inject = async () => {
+      const style = doc.createElement('style');
+      style.id = '__editor_style__';
+      style.textContent = INJECTED_STYLE;
+      doc.head.appendChild(style);
+      // Resolve relative `assets/*` paths to blob URLs from the open folder
+      try { await window.__editorBindAssets(doc); } catch (e) { console.error(e); }
+      const script = doc.createElement('script');
+      script.id = '__editor_runtime__';
+      script.src = 'data:application/javascript,' + encodeURIComponent(RUNTIME_SCRIPT);
+      script.onload = () => { script.dataset.loaded = 'true'; };
+      doc.body.appendChild(script);
+    };
+    if (doc.readyState === 'complete' || doc.readyState === 'interactive') inject();
+    else doc.addEventListener('DOMContentLoaded', inject, { once: true });
+  }
+
+  // Listen for reposition requests from iframe runtime
+  window.addEventListener('message', e => {
+    if (!preview.contentDocument?.body?.contains(e.source?.document?.body ?? null)) return;
+    if (e.data?.type === '__editor_reposition') {
+      // Forward reposition signal back into iframe via postMessage
+      try { preview.contentWindow?.postMessage(e.data, '*'); } catch {}
+    }
+  });
+
+  // ---- Undo / Redo ----
+  const MAX_HISTORY = 50;
+  const history = [];
+  let historyIndex = -1;
+  let srcAnchorValue = '';
+
+  function syncHistory(value) {
+    // Discard any future states if we branched
+    if (historyIndex < history.length - 1) history.length = historyIndex + 1;
+    history.push(value);
+    if (history.length > MAX_HISTORY) history.shift();
+    else historyIndex++;
+  }
+
+  function undo() {
+    if (historyIndex <= 0) { showToast('没有可撤销的更改', true); return; }
+    historyIndex--;
+    srcInput.value = history[historyIndex];
+    renderPreview(srcInput.value);
+    showToast('已撤销');
+  }
+
+  function redo() {
+    if (historyIndex >= history.length - 1) { showToast('没有可重做的更改', true); return; }
+    historyIndex++;
+    srcInput.value = history[historyIndex];
+    renderPreview(srcInput.value);
+    showToast('已重做');
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault(); undo();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+      e.preventDefault(); redo();
+    }
+  });
+
+  // Debounced render on input
+  let t = null;
+  srcInput.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const v = srcInput.value;
+      if (v !== srcAnchorValue) {
+        syncHistory(v);
+        srcAnchorValue = v;
+      }
+      renderPreview(v);
+    }, 200);
+  });
+
+  // Anchor initial/demo state
+  syncHistory(srcInput.value);
+  srcAnchorValue = srcInput.value;
+
+  undoBtn.addEventListener('click', undo);
+  redoBtn.addEventListener('click', redo);
+
+  function setSourceOpen(open) {
+    paneCode.classList.toggle('open', open);
+    sourceScrim.hidden = !open;
+    sourceBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) requestAnimationFrame(() => srcInput.focus());
+  }
+  sourceBtn.setAttribute('aria-expanded', 'false');
+  sourceBtn.addEventListener('click', () => setSourceOpen(!paneCode.classList.contains('open')));
+  toggleCode.addEventListener('click', () => setSourceOpen(false));
+  sourceScrim.addEventListener('click', () => setSourceOpen(false));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && paneCode.classList.contains('open')) setSourceOpen(false);
+  });
+
+  function buildExportedHTML() {
+    const doc = preview.contentDocument;
+    if (!doc) return null;
+    // Normalize DOM before cloning so all text nodes are merged
+    doc.normalize();
+    const clone = doc.documentElement.cloneNode(true);
+    clone.querySelectorAll('#__editor_style__, #__editor_runtime__, #__editor_toolbar__').forEach(n => n.remove());
+    cleanupPresentationRuntimeState(clone);
+    clone.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
+    clone.querySelectorAll('[data-editable]').forEach(n => n.removeAttribute('data-editable'));
+    clone.querySelectorAll('[data-media-editable]').forEach(n => n.removeAttribute('data-media-editable'));
+    clone.querySelectorAll('[data-media-selected]').forEach(n => n.removeAttribute('data-media-selected'));
+    clone.querySelectorAll('[data-media-placeholder]').forEach(n => n.removeAttribute('data-media-placeholder'));
+    clone.querySelectorAll('[data-media-kind]').forEach(n => n.removeAttribute('data-media-kind'));
+    clone.querySelectorAll('[data-editor-base-font-size]').forEach(n => n.removeAttribute('data-editor-base-font-size'));
+    clone.querySelectorAll('[data-editor-base-media-width]').forEach(n => n.removeAttribute('data-editor-base-media-width'));
+    // Restore relative `assets/*` paths from data-src-original (img / video / source)
+    clone.querySelectorAll('[data-src-original]').forEach(n => {
+      n.setAttribute('src', n.getAttribute('data-src-original'));
+      n.removeAttribute('data-src-original');
+    });
+    return '<!doctype html>\n' + clone.outerHTML;
+  }
+
+  function cleanupPresentationRuntimeState(root) {
+    // Declaration-based cleanup: PPT authors add data-clean-exports="slide-nav" to #deck
+    const deck = root.querySelector('#deck');
+    const wantsCleanup =
+      (deck && deck.hasAttribute('data-clean-exports')) ||
+      (root.hasAttribute && root.hasAttribute('data-clean-exports'));
+
+    // Fallback: legacy hardcoded detection if no declaration present
+    const scriptsText = [...root.querySelectorAll('script')].map(s => s.textContent || '').join('\n');
+    const legacySlideDeck =
+      !wantsCleanup &&
+      deck &&
+      root.querySelector('#nav-dots') &&
+      root.querySelector('.slide') &&
+      /navDots\.appendChild|navDots\.append\(|getElementById\(['"]nav-dots['"]\)/.test(scriptsText);
+
+    if (!wantsCleanup && !legacySlideDeck) return;
+
+    // Clean up generated nav dots so they don't duplicate on reload
+    root.querySelectorAll('#nav-dots').forEach(nav => {
+      nav.querySelectorAll('.nav-dot').forEach(dot => dot.remove());
+    });
+
+    const slides = root.querySelectorAll('.slide');
+    slides.forEach((slide, index) => slide.classList.toggle('is-active', index === 0));
+
+    if (deck) deck.style.removeProperty('transform');
+
+    const progress = root.querySelector('#progress-bar');
+    if (progress && slides.length) progress.style.width = (100 / slides.length) + '%';
+
+    const counter = root.querySelector('#slide-counter');
+    if (counter && slides.length) counter.textContent = '01 / ' + String(slides.length).padStart(2, '0');
+  }
+  function downloadHTML(html, filename) {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function assetNameFromSrc(src) {
+    const raw = (src || '').trim();
+    if (!raw.startsWith('assets/')) return null;
+    const withoutPrefix = raw.slice('assets/'.length);
+    const name = withoutPrefix.split(/[?#]/)[0];
+    if (!name || name.includes('/')) return null;
+    let decoded = name;
+    try { decoded = decodeURIComponent(name); } catch {}
+    if (!decoded || decoded.includes('/')) return null;
+    return decoded;
+  }
+
+  function collectReferencedAssetNames(html) {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    const names = new Set();
+    parsed.querySelectorAll('img[src], video[src], source[src]').forEach(node => {
+      const name = assetNameFromSrc(node.getAttribute('src'));
+      if (name) names.add(name);
+    });
+    return [...names];
+  }
+
+  async function uniqueExportFileName(dir, suggested) {
+    const safe = (suggested || 'edited_presentation.html')
+      .replace(/[\\/:*?"<>|\x00-\x1F]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'edited_presentation.html';
+    const withExt = /\.html?$/i.test(safe) ? safe : safe + '.html';
+    const dot = withExt.lastIndexOf('.');
+    const base = dot > 0 ? withExt.slice(0, dot) : withExt;
+    const ext = dot > 0 ? withExt.slice(dot) : '.html';
+    let name = withExt, i = 1;
+    while (true) {
+      try { await dir.getFileHandle(name); }
+      catch { return name; }
+      name = base + '-' + (i++) + ext;
+    }
+  }
+
+  async function copyReferencedAssetsTo(assetNames, outDir) {
+    if (!assetNames.length) return { copied: 0, missing: [] };
+    const missing = [];
+    let copied = 0;
+    let outAssets = null;
+
+    for (const name of assetNames) {
+      if (!assetsDirHandle) {
+        missing.push(name);
+        continue;
+      }
+      try {
+        const srcHandle = await assetsDirHandle.getFileHandle(name);
+        const file = await srcHandle.getFile();
+        if (!outAssets) outAssets = await outDir.getDirectoryHandle('assets', { create: true });
+        const destHandle = await outAssets.getFileHandle(name, { create: true });
+        const writable = await destHandle.createWritable();
+        await writable.write(file);
+        await writable.close();
+        copied++;
+      } catch (e) {
+        console.warn('copy asset failed', name, e);
+        missing.push(name);
+      }
+    }
+    return { copied, missing };
+  }
+
+  async function exportHTML(html) {
+    const filename = htmlName || 'edited_presentation.html';
+    const assetNames = collectReferencedAssetNames(html);
+
+    if (!SUPPORTS_FSA || !assetNames.length) {
+      downloadHTML(html, filename);
+      if (assetNames.length) showToast('已导出 HTML；当前浏览器不能自动导出 assets，请手动复制资源文件夹', true);
+      else showToast('已导出新文件');
+      return;
+    }
+
+    try {
+      const outDir = await window.showDirectoryPicker({ mode: 'readwrite' });
+      let perm = await outDir.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') perm = await outDir.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') { showToast('未授予导出目录写入权限', true); return; }
+
+      const outName = await uniqueExportFileName(outDir, filename);
+      const htmlOut = await outDir.getFileHandle(outName, { create: true });
+      const writable = await htmlOut.createWritable();
+      await writable.write(html);
+      await writable.close();
+
+      const result = await copyReferencedAssetsTo(assetNames, outDir);
+      if (result.missing.length) {
+        showToast('已导出 ' + outName + '，但有 ' + result.missing.length + ' 个资源未复制', true);
+      } else {
+        showToast('已导出 ' + outName + '，并复制 ' + result.copied + ' 个资源');
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.error(e);
+        showToast('导出失败：' + e.message, true);
+      }
+    }
+  }
+
+  exportBtn.addEventListener('click', async () => {
+    const html = buildExportedHTML();
+    if (html == null) return;
+    await exportHTML(html);
+  });
+
+  overwriteBtn.addEventListener('click', async () => {
+    if (!htmlHandle) return;
+    setSourceOpen(false); // close source panel so we export the preview DOM
+    const html = buildExportedHTML();
+    if (html == null) return;
+    if (!confirm('确认覆盖 ' + htmlName + '？此操作不可撤销。')) return;
+    try {
+      let perm = await htmlHandle.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') perm = await htmlHandle.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') { showToast('未授予写入权限', true); return; }
+      const writable = await htmlHandle.createWritable();
+      await writable.write(html);
+      await writable.close();
+      showToast('已覆盖 ' + htmlName);
+    } catch (e) {
+      console.error(e);
+      showToast('覆盖失败：' + e.message, true);
+    }
+  });
+
+  // Demo
+  const demo = `<!doctype html>
+<html><head><meta charset="utf-8"><title>示例页面</title>
+<style>
+  :root{--bg:#0A0A0A;--bg-2:#141414;--plate:#F2EBDD;--paper:#F2EBDD;--ink:#0B0B0B;--mute:#8A8478;--line:#2A2A2A;--blue:#2540FF;--blue-soft:#4A60FF;--orange:#FF5A2C;--display:"Arial Black","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;--sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+  *{box-sizing:border-box}
+  body{font:16px/1.6 var(--sans);margin:0;color:var(--paper);background:var(--bg)}
+  .hero{padding:64px 48px 56px;border-bottom:1px solid var(--line)}
+  .url{display:inline-block;font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--paper);border-radius:999px;padding:8px 14px;color:var(--paper)}
+  h1{margin:28px 0 18px;max-width:720px;font-size:clamp(48px,8vw,92px);line-height:.95;letter-spacing:.01em}
+  h1 span{display:inline-block;background:var(--plate);color:var(--ink);font-family:var(--display);font-weight:400;text-transform:uppercase;padding:8px 18px 4px;transform:rotate(-1.5deg)}
+  h1 span:last-child{color:var(--blue);transform:rotate(1.5deg);margin-top:8px}
+  p.lead{font-size:18px;color:var(--paper);max-width:56ch;margin:0;opacity:.86}
+  .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:32px 48px 48px;background:var(--bg)}
+  .card{background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .card img,.card video,.card .img-slot,.card .video-slot{width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:14px;background:#0F0F0F;display:block;border:1px solid var(--line)}
+  .card .video-slot{background:#050505}
+  h3{margin:0 0 7px;font-size:18px;font-weight:900}
+  h3::before{content:"✱";color:var(--orange);margin-right:7px}
+  .card p{margin:0;color:var(--mute);font-size:14px}
+  @media(max-width:760px){.hero{padding:40px 22px}.cards{grid-template-columns:1fr;padding:22px}.card img,.card video,.card .img-slot,.card .video-slot{height:180px}}
+</style></head>
+<body>
+  <section class="hero">
+    <span class="url">HTML编辑器</span>
+    <h1><span>WEB</span><br><span>EDITOR</span></h1>
+    <p class="lead">直接点文字修改。点图片或视频替换。完成后导出新文件，或覆盖原 HTML。</p>
+  </section>
+  <section class="cards">
+    <div class="card"><img src="https://picsum.photos/seed/html-editor/600/400"><h3>可视编辑</h3><p>编辑直接发生在预览里。</p></div>
+    <div class="card"><div class="img-slot" data-img-slot></div><h3>图片占位</h3><p>点虚线框即可插入图片。</p></div>
+    <div class="card"><div class="video-slot" data-video-slot></div><h3>视频占位</h3><p>打开文件夹后可插入视频。</p></div>
+  </section>
+</body></html>`;
+  loadDemo.addEventListener('click', () => { srcInput.value = demo; renderPreview(demo); });
+
+  // initial
+  loadDemo.click();
+})();
+</script>
+</body>
+</html>
