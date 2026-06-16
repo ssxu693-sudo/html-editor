@@ -449,8 +449,10 @@
   if (!SUPPORTS_FSA) {
     openFolderBtn.disabled = true;
     openFolderBtn.title = '当前浏览器不支持文件系统访问，请使用电脑端 Chrome / Edge / Arc';
+  }
+  if (!SUPPORTS_FILE_PICKER) {
     openFileBtn.disabled = true;
-    openFileBtn.title = '当前浏览器不支持文件系统访问，请使用电脑端 Chrome / Edge / Arc';
+    openFileBtn.title = '此浏览器不支持直接打开文件，请使用电脑端 Chrome / Edge / Arc';
   }
 
   function chooseHTMLFile(htmls, folderName) {
@@ -631,8 +633,14 @@
   openFolderBtn.addEventListener('click', openFolder);
 
   // ---- Open single file ----
+  // Detect File System Access API support
+  const SUPPORTS_FILE_PICKER = typeof window.showOpenFilePicker === 'function';
+
   async function openFile() {
-    if (!SUPPORTS_FSA) return;
+    if (!SUPPORTS_FILE_PICKER) {
+      showToast('此浏览器不支持直接打开文件，请使用 Chrome / Edge / Arc', true);
+      return;
+    }
     try {
       const [fh] = await window.showOpenFilePicker({ types: [{ description: 'HTML 文件', accept: { 'text/html': ['.html', '.htm'] } }] });
       freeBlobURLs();
