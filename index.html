@@ -635,12 +635,15 @@
 
   // ---- Open single file ----
   async function openFile() {
+    console.log('[HTML编辑器] openFile() called, SUPPORTS_FILE_PICKER=', SUPPORTS_FILE_PICKER);
     if (!SUPPORTS_FILE_PICKER) {
       showToast('此浏览器不支持直接打开文件，请使用 Chrome / Edge / Arc', true);
       return;
     }
+    console.log('[HTML编辑器] calling showOpenFilePicker...');
     try {
       const [fh] = await window.showOpenFilePicker({ types: [{ description: 'HTML 文件', accept: { 'text/html': ['.html', '.htm'] } }] });
+      console.log('[HTML编辑器] file picked:', fh.name);
       freeBlobURLs();
       dirHandle = null;
       assetsDirHandle = null;
@@ -653,10 +656,17 @@
       setSourceOpen(false);
       showToast('已打开 ' + htmlName);
     } catch (e) {
-      if (e.name !== 'AbortError') { console.error(e); showToast('打开失败：' + e.message, true); }
+      console.error('openFile error:', e.name, e.message);
+      if (e.name === 'AbortError') {
+        // User cancelled — silent, no toast
+      } else if (e.name === 'SecurityError') {
+        showToast('安全错误：需要 HTTPS 或 localhost', true);
+      } else {
+        showToast('打开失败 [' + e.name + ']: ' + e.message, true);
+      }
     }
   }
-  openFileBtn.addEventListener('click', openFile);
+  openFileBtn.addEventListener('click', () => { console.log('[HTML编辑器] openFile clicked, calling picker...'); openFile(); });
 
   const EDITABLE_TAGS = new Set(['P','SPAN','H1','H2','H3','H4','H5','H6','LI','A','BUTTON','LABEL','TD','TH','BLOCKQUOTE','FIGCAPTION','STRONG','EM','SMALL','DT','DD','SUMMARY','CAPTION','DIV']);
 
@@ -1259,10 +1269,21 @@
       doc.head.appendChild(style);
       // Resolve relative `assets/*` paths to blob URLs from the open folder
       try { await window.__editorBindAssets(doc); } catch (e) { console.error(e); }
+      // Report back when runtime is ready
+      window.addEventListener('message', e => {
+        if (e.data?.type === '__editor_ready') {
+          try { preview.contentWindow.postMessage({ type: '__editor_debug', editableCount: doc.querySelectorAll('[data-editable=true]').length, mediaCount: doc.querySelectorAll('[data-media-editable=true]').length, allEditableTags: doc.body.innerHTML.includes('contenteditable') }, '*'); } catch {}
+        }
+      });
+      window.addEventListener('message', e => {
+        if (e.data?.type === '__editor_debug') {
+          console.log('[HTML编辑器] 可编辑元素:', e.data.editableCount, '媒体元素:', e.data.mediaCount);
+        }
+      });
       const script = doc.createElement('script');
       script.id = '__editor_runtime__';
       script.src = 'data:application/javascript,' + encodeURIComponent(RUNTIME_SCRIPT);
-      script.onload = () => { script.dataset.loaded = 'true'; };
+      script.onload = () => { script.dataset.loaded = 'true'; try { window.parent.postMessage({ type: '__editor_ready' }, '*'); } catch {} };
       doc.body.appendChild(script);
     };
     if (doc.readyState === 'complete' || doc.readyState === 'interactive') inject();
