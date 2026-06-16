@@ -815,12 +815,17 @@
         el.addEventListener('click', onMediaClick);
       }
       function makeEditable(root){
+        const before = Date.now();
+        const editableEls = [];
         root.querySelectorAll('*').forEach(el => {
           if (set.has(el.tagName) && hasOnlyTextOrInline(el)) {
             el.setAttribute('contenteditable','true');
             el.setAttribute('data-editable','true');
+            editableEls.push(el.tagName + '=' + el.textContent.trim().substring(0,15));
           }
         });
+        try { window.parent.postMessage({ type: '__editor_stats', count: editableEls.length, samples: editableEls.slice(0,5), time: Date.now() - before }, '*'); } catch(e) {}
+      }
         // Explicit placeholder containers (div/section/etc.)
         root.querySelectorAll(IMG_PLACEHOLDER_SELECTOR).forEach(el => markContainerPlaceholder(el, 'image'));
         root.querySelectorAll(VIDEO_PLACEHOLDER_SELECTOR).forEach(el => markContainerPlaceholder(el, 'video'));
